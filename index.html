@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة العمليات على الفترات</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ---------------------------------------------------- */
+        /* 1. متغيرات CSS (Theme Variables) والتنسيق الأساسي */
+        /* ---------------------------------------------------- */
+        :root {
+            /* الألوان المشتركة */
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-a: #f5576c;
+            --accent-b: #00f2fe;
+            --accent-c: #38f9d7;
+        }
+
+        /* الثيم الداكن (Dark Theme - افتراضي) */
+        .dark-theme {
+            --bg-color: #1a1a2e;
+            --card-bg: #2c2c54;
+            --text-color: #f1f1f1;
+            --input-bg: #1a1a2e;
+            --border-color: #5d5d81;
+            --section-bg: #3b3b64;
+            --membership-bg: #5d5d81;
+            --shadow: 0 5px 15px rgba(0,0,0,0.4);
+        }
+
+        /* الثيم الفاتح (Light Theme) */
+        .light-theme {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --input-bg: #ffffff;
+            --border-color: #ddd;
+            --section-bg: #e9ecef;
+            --membership-bg: #fff3cd;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            /* تعديل: إضافة خط كايرو */
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.5s;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            transition: background 0.5s, box-shadow 0.5s;
+            position: relative;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        
+        .input-section {
+            background: var(--section-bg);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .interval-input {
+            display: grid;
+            /* هذا التنسيق للشاشات الكبيرة */
+            grid-template-columns: 100px 120px 1fr 120px;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        label {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        input[type="number"],
+        .bracket-select {
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s, background-color 0.3s;
+            background: var(--input-bg);
+            color: var(--text-color);
+            /* تعديل: جعل الحقول تأخذ العرض الكامل ضمن حاويتها */
+            width: 100%; 
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .bracket-select {
+            cursor: pointer;
+        }
+
+        /* أزرار العمليات */
+        .operations {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            /* تعديل: استخدام الخط الجديد */
+            font-family: 'Cairo', sans-serif;
+        }
+
+        /* تنسيق زر تبديل الثيم */
+        .btn-theme-toggle {
+            position: absolute;
+            top: 15px;
+            /* تعديل: تغيير مكان الزر ليتناسب مع RTL */
+            left: 15px; 
+            right: auto;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 15px;
+            font-size: 14px;
+            box-shadow: none;
+        }
+
+        /* ألوان الأزرار */
+        .btn-intersection { background: linear-gradient(135deg, #f093fb 0%, var(--accent-a) 100%); }
+        .btn-union { background: linear-gradient(135deg, #4facfe 0%, var(--accent-b) 100%); }
+        .btn-difference { background: linear-gradient(135deg, #43e97b 0%, var(--accent-c) 100%); }
+        .btn-membership { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .membership-section {
+            background: var(--membership-bg);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .membership-section.active {
+            display: block;
+        }
+        
+        /* تنسيق النتائج والخط */
+        .number-line {
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .line-container {
+            position: relative;
+            height: 100px;
+            margin: 20px 0;
+        }
+        
+        .line {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            right: 5%;
+            height: 3px;
+            background: var(--text-color);
+        }
+        
+        .line::before,
+        .line::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+        
+        .line::after {
+            right: -8px;
+            border-width: 6px 0 6px 10px;
+            border-color: transparent transparent transparent var(--text-color);
+        }
+        
+        .interval-visual {
+            position: absolute;
+            height: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 3px;
+            opacity: 0.7;
+        }
+        
+        .interval-a {
+            background: #f093fb;
+            top: calc(50% - 25px);
+        }
+        
+        .interval-b {
+            background: #4facfe;
+            top: calc(50% + 5px);
+        }
+        
+        .interval-result {
+            background: #43e97b;
+            top: 50%;
+            height: 25px;
+            border: 3px solid #2ecc71;
+            opacity: 0.9;
+        }
+        
+        .tick {
+            position: absolute;
+            top: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .tick-line {
+            width: 2px;
+            height: 15px;
+            background: var(--text-color);
+            margin: 0 auto;
+        }
+        
+        .tick-label {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 5px;
+            color: var(--text-color);
+        }
+        
+       .result-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text-color);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .result-value {
+            font-size: 24px;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            display: block;
+            unicode-bidi: bidi-override;
+            margin-top: 5px;
+        }
+        
+        .result-section.active {
+            display: block;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .point-marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        /* ---------------------------------------------------- */
+        /* 2. تحسين الاستجابة (Responsiveness) */
+        /* ---------------------------------------------------- */
+        
+        @media (max-width: 900px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .interval-input {
+                grid-template-columns: 80px 100px 1fr 100px;
+                gap: 10px;
+            }
+
+            .interval-input > div {
+                display: flex;
+                gap: 5px;
+            }
+            /* تعديل: جعل حقول الأرقام تتقاسم المساحة */
+            .interval-input > div > input[type="number"] {
+                 flex: 1;
+                 min-width: 0;
+            }
+        }
+
+        /* ======================================================== */
+        /* تعديل: تبسيط كامل لقواعد الاستجابة للشاشات الصغيرة جداً */
+        /* ======================================================== */
+        @media (max-width: 650px) {
+            body {
+                padding: 10px; /* تقليل الحشو الخارجي */
+            }
+            .container {
+                padding: 15px; /* تقليل الحشو الداخلي */
+            }
+            h1 {
+                font-size: 1.8em; /* تصغير العنوان */
+            }
+            
+            .interval-input {
+                /* جعل كل العناصر (العنوان، الأقواس، الحقول) مكدسة عمودياً */
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px; 
+            }
+            
+            .interval-input label {
+                text-align: right;
+                font-size: 1.1em;
+                margin-bottom: 0;
+            }
+
+            /* استهداف الـ div الذي يحتوي حقلي الأرقام والفاصلة */
+            .interval-input > div {
+                display: flex;
+                gap: 5px; /* تقليل المسافة بين الحقول */
+            }
+
+            /* هذا هو الإصلاح الأهم: */
+            /* جعل حقول الأرقام تتقاسم المساحة المتاحة وتسمح لها بالانكماش */
+            .interval-input > div > input[type="number"] {
+                flex: 1;        /* اجعلها تملأ المساحة */
+                min-width: 0;   /* اسمح لها بالانكماش لأصغر حجم */
+            }
+            
+            /* الأقواس (select) ستأخذ 100% عرض تلقائياً بسبب 1fr grid */
+            
+            .operations {
+                /* جعل الأزرار مكدسة عمودياً */
+                flex-direction: column;
+            }
+            
+            .membership-section > div {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-theme-toggle {
+                position: static; /* إزالة التثبيت */
+                margin-bottom: 15px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="container">
+        <button id="themeToggle" class="btn-theme-toggle" onclick="toggleTheme()">تبديل الثيم 💡</button>
+        <h1>🧮 حاسبة العمليات على الفترات</h1>
+        
+        <div class="input-section">
+            <div class="interval-input">
+                <label>الفترة A:</label>
+                <select class="bracket-select" id="bracketA1">
+                    <option value="]" selected>[ مغلقة</option>
+                    <option value="[">] مفتوحة</option>
+                </select>
+                <div>
+                    <input type="number" id="a1" placeholder="البداية" value="-5" step="0.1">
+                    <span style="align-self: center; font-size: 20px; color: var(--text-color);">,</span>
+                    <input type="number" id="a2" placeholder="النهاية" value="3" step="0.1">
+                </div>
+                <select class="bracket-select" id="bracketA2">
+                    <option value="]" selected>مغلقة ]</option>
+                    <option value="[">مفتوحة [</option>
+                </select>
+            </div>
+            
+            <div class="interval-input">
+                <label>الفترة B:</label>
+                <select class="bracket-select" id="bracketB1">
+                    <option value="]" selected>[ مغلقة</option>
+                    <option value="[">] مفتوحة</option>
+                </select>
+                <div>
+                    <input type="number" id="b1" placeholder="البداية" value="0" step="0.1">
+                    <span style="align-self: center; font-size: 20px; color: var(--text-color);">,</span>
+                    <input type="number" id="b2" placeholder="النهاية" value="8" step="0.1">
+                </div>
+                <select class="bracket-select" id="bracketB2">
+                    <option value="]" selected>مغلقة ]</option>
+                    <option value="[">مفتوحة [</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="operations">
+            <button class="btn-intersection" onclick="calculateIntersection()">⋂ التقاطع</button>
+            <button class="btn-union" onclick="calculateUnion()">⋃ الاتحاد</button>
+            <button class="btn-difference" onclick="calculateDifference()">∖ الطرح (A - B)</button>
+            <button class="btn-membership" onclick="toggleMembership()">∈ اختبار الانتماء</button>
+        </div>
+        
+        <div class="membership-section" id="membershipSection">
+            <div>
+                <label style="color: var(--text-color);">اختبر انتماء العدد:</label>
+                <input type="number" id="testNumber" placeholder="أدخل عدد" value="1" step="0.1" style="width: 150px;">
+                <button class="btn-membership" onclick="testMembership('A')">للفترة A</button>
+                <button class="btn-membership" onclick="testMembership('B')">للفترة B</button>
+            </div>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <div class="result-text" id="resultText"></div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f093fb;"></div>
+                    <span>الفترة A</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4facfe;"></div>
+                    <span>الفترة B</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #43e97b; border: 2px solid #2ecc71;"></div>
+                    <span>النتيجة</span>
+                </div>
+            </div>
+            <div class="number-line">
+                <div class="line-container" id="lineContainer"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentOperation = null;
+
+        // =======================================================
+        // دوال تبديل وتحميل الثيم
+        // =======================================================
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.classList.contains('dark-theme') ? 'dark' : 'light';
+            const toggleButton = document.getElementById('themeToggle');
+            
+            if (currentTheme === 'dark') {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                localStorage.setItem('theme', 'light');
+                toggleButton.textContent = 'تبديل الثيم 🌙';
+            } else {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark');
+                toggleButton.textContent = 'تبديل الثيم 💡';
+            }
+            if (document.getElementById('resultSection').classList.contains('active')) {
+                drawNumberLine(currentOperation, null); 
+            }
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const toggleButton = document.getElementById('themeToggle');
+
+            if (savedTheme === 'light') {
+                body.classList.add('light-theme');
+                body.classList.remove('dark-theme');
+                toggleButton.textContent = 'تبديل الثيم 🌙';
+            } else {
+                body.classList.add('dark-theme');
+                body.classList.remove('light-theme');
+                toggleButton.textContent = 'تبديل الثيم 💡';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadTheme); 
+        
+        // =======================================================
+        // دوال العمليات الحسابية (لا تحتاج تعديل)
+        // =======================================================
+        
+        function getIntervalValues() {
+            const a1 = parseFloat(document.getElementById('a1').value);
+            const a2 = parseFloat(document.getElementById('a2').value);
+            const b1 = parseFloat(document.getElementById('b1').value);
+            const b2 = parseFloat(document.getElementById('b2').value);
+            
+            const bracketA1 = document.getElementById('bracketA1').value;
+            const bracketA2 = document.getElementById('bracketA2').value;
+            const bracketB1 = document.getElementById('bracketB1').value;
+            const bracketB2 = document.getElementById('bracketB2').value;
+            
+            return {
+                intervalA: { start: a1, end: a2, startInc: bracketA1 === ']', endInc: bracketA2 === ']' },
+                intervalB: { start: b1, end: b2, startInc: bracketB1 === ']', endInc: bracketB2 === ']' }
+            };
+        }
+        
+        function calculateIntersection() {
+            const { intervalA, intervalB } = getIntervalValues();
+            
+            const start = Math.max(intervalA.start, intervalB.start);
+            const end = Math.min(intervalA.end, intervalB.end);
+            
+            if (start > end || (start === end && !(intervalA.startInc && intervalB.startInc && intervalA.endInc && intervalB.endInc))) {
+                showResult("∅ التقاطع<br>(الفترتان لا تتقاطعان)", null);
+                return;
+            }
+            
+            const startInc = start === intervalA.start ? intervalA.startInc : start === intervalB.start ? intervalB.startInc : true;
+            const endInc = end === intervalA.end ? intervalA.endInc : end === intervalB.end ? intervalB.endInc : true;
+            
+            const result = { start, end, startInc, endInc };
+            const notation = formatInterval(result);
+            showResult(`التقاطع<br>: ${notation}`, result, 'intersection');
+        }
+        
+        function calculateUnion() {
+            const { intervalA, intervalB } = getIntervalValues();
+            
+            const start = Math.min(intervalA.start, intervalB.start);
+            const end = Math.max(intervalA.end, intervalB.end);
+            
+            const startInc = start === intervalA.start ? intervalA.startInc : intervalB.startInc;
+            const endInc = end === intervalA.end ? intervalA.endInc : intervalB.endInc;
+            
+            const result = { start, end, startInc, endInc };
+            const notation = formatInterval(result);
+            showResult(`الاتحاد<br>: ${notation}`, result, 'union');
+        }
+        
+        function calculateDifference() {
+            const { intervalA, intervalB } = getIntervalValues();
+            
+            if (intervalA.end < intervalB.start || intervalA.start > intervalB.end) {
+                const notation = formatInterval(intervalA);
+                showResult(`الطرح (A - B)<br>: ${notation}`, intervalA, 'difference');
+                return;
+            }
+            
+            if (intervalB.start <= intervalA.start && intervalB.end >= intervalA.end) {
+                showResult("∅ الطرح فارغ<br>(B تحتوي على A كاملة)", null);
+                return;
+            }
+            
+            if (intervalB.start > intervalA.start && intervalB.end < intervalA.end) {
+                const result1 = { 
+                    start: intervalA.start, 
+                    end: intervalB.start, 
+                    startInc: intervalA.startInc, 
+                    endInc: !intervalB.startInc 
+                };
+                const result2 = { 
+                    start: intervalB.end, 
+                    end: intervalA.end, 
+                    startInc: !intervalB.endInc, 
+                    endInc: intervalA.endInc 
+                };
+                const notation = `${formatInterval(result1)} ⋃ ${formatInterval(result2)}`;
+                showResult(`الطرح (A - B)<br>: ${notation}`, [result1, result2], 'difference');
+                return;
+            }
+            
+            let result;
+            if (intervalB.start <= intervalA.start) {
+                result = { 
+                    start: intervalB.end, 
+                    end: intervalA.end, 
+                    startInc: !intervalB.endInc, 
+                    endInc: intervalA.endInc 
+                };
+            } else {
+                result = { 
+                    start: intervalA.start, 
+                    end: intervalB.start, 
+                    startInc: intervalA.startInc, 
+                    endInc: !intervalB.startInc 
+                };
+            }
+            
+            const notation = formatInterval(result);
+            showResult(`الطرح (A - B)<br>: ${notation}`, result, 'difference');
+        }
+        
+        function toggleMembership() {
+            const section = document.getElementById('membershipSection');
+            section.classList.toggle('active');
+        }
+        
+        function testMembership(interval) {
+            const testNum = parseFloat(document.getElementById('testNumber').value);
+            if (isNaN(testNum)) {
+                alert('الرجاء إدخال عدد صحيح');
+                return;
+            }
+            
+            const { intervalA, intervalB } = getIntervalValues();
+            const targetInterval = interval === 'A' ? intervalA : intervalB;
+            
+            const inInterval = (testNum > targetInterval.start || (testNum === targetInterval.start && targetInterval.startInc)) &&
+                                 (testNum < targetInterval.end || (testNum === targetInterval.end && targetInterval.endInc));
+            
+            const notation = formatInterval(targetInterval);
+            const symbol = inInterval ? '∈' : '∉';
+            const text = inInterval ? 'ينتمي إلى' : 'لا ينتمي إلى';
+            
+            showResult(`${testNum} ${symbol} ${notation}<br>(العدد ${text} الفترة ${interval})`, targetInterval, 'membership', testNum);
+        }
+        
+        function formatInterval(interval) {
+            const start = interval.startInc ? '[' : ']';
+            const end = interval.endInc ? ']' : '[';
+            return `${start}${interval.start}, ${interval.end}${end}`;
+        }
+        
+        function showResult(text, result, operation, testPoint = null) {
+            document.getElementById('resultText').innerHTML = text; 
+            document.getElementById('resultSection').classList.add('active');
+            currentOperation = result; 
+            drawNumberLine(result, testPoint);
+        }
+        
+        function drawNumberLine(result, testPoint = null) {
+            const { intervalA, intervalB } = getIntervalValues();
+            const container = document.getElementById('lineContainer');
+            container.innerHTML = '';
+            
+            const minVal = Math.min(intervalA.start, intervalB.start) - 2;
+            const maxVal = Math.max(intervalA.end, intervalB.end) + 2;
+            const range = maxVal - minVal;
+            
+            // Draw main line
+            const line = document.createElement('div');
+            line.className = 'line';
+            container.appendChild(line);
+            
+            // Draw intervals
+            drawInterval(container, intervalA, minVal, range, 'interval-a');
+            drawInterval(container, intervalB, minVal, range, 'interval-b');
+            
+            // Draw result
+            if (result) {
+                if (Array.isArray(result)) {
+                    result.forEach(r => drawInterval(container, r, minVal, range, 'interval-result'));
+                } else if (result.start !== undefined) { 
+                    drawInterval(container, result, minVal, range, 'interval-result');
+                }
+            }
+            
+            // Draw test point
+            if (testPoint !== null) {
+                const pointPos = ((testPoint - minVal) / range) * 90 + 5;
+                const marker = document.createElement('div');
+                marker.className = 'point-marker';
+                marker.style.left = pointPos + '%';
+                container.appendChild(marker);
+            }
+            
+            // Draw ticks
+            const step = Math.ceil(range / 10);
+            for (let i = Math.ceil(minVal); i <= Math.floor(maxVal); i += step) {
+                if (range === 0 || step === 0) break; // Avoid infinite loop
+                const pos = ((i - minVal) / range) * 90 + 5;
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = pos + '%';
+                tick.innerHTML = `<div class="tick-line"></div><div class="tick-label">${i}</div>`;
+                container.appendChild(tick);
+            }
+        }
+        
+        // =======================================================
+        // تعديل: تصحيح لون خلفية الدائرة المفرغة (لا تغيير هنا، كان صحيحاً)
+        // =======================================================
+        function drawInterval(container, interval, minVal, range, className) {
+            const startPos = ((interval.start - minVal) / range) * 90 + 5;
+            const endPos = ((interval.end - minVal) / range) * 90 + 5;
+            
+            const div = document.createElement('div');
+            div.className = `interval-visual ${className}`;
+            div.style.left = startPos + '%';
+            div.style.width = (endPos - startPos) + '%';
+            container.appendChild(div);
+            
+            // Draw start indicator
+            const startIndicator = document.createElement('div');
+            startIndicator.style.position = 'absolute';
+            startIndicator.style.width = '10px';
+            startIndicator.style.height = '10px';
+            startIndicator.style.borderRadius = '50%';
+            startIndicator.style.border = '3px solid var(--text-color)';
+            startIndicator.style.top = '50%';
+            startIndicator.style.transform = 'translate(-50%, -50%)';
+            startIndicator.style.left = startPos + '%';
+            startIndicator.style.zIndex = '5';
+            
+            if (interval.startInc) {
+                startIndicator.style.background = 'var(--text-color)';
+            } else {
+                startIndicator.style.background = 'var(--card-bg)'; 
+            }
+            container.appendChild(startIndicator);
+            
+            // Draw end indicator
+            const endIndicator = document.createElement('div');
+            endIndicator.style.position = 'absolute';
+            endIndicator.style.width = '10px';
+            endIndicator.style.height = '10px';
+            endIndicator.style.borderRadius = '50%';
+            endIndicator.style.border = '3px solid var(--text-color)';
+            endIndicator.style.top = '50%';
+            endIndicator.style.transform = 'translate(-50%, -50%)';
+            endIndicator.style.left = endPos + '%';
+            endIndicator.style.zIndex = '5';
+            
+            if (interval.endInc) {
+                endIndicator.style.background = 'var(--text-color)';
+            } else {
+                endIndicator.style.background = 'var(--card-bg)';
+            }
+            container.appendChild(endIndicator);
+        }
+    </script>
+</body>
+</html>
