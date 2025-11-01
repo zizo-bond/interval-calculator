@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="ar" dir="ltr"> 
+<html lang="ar" dir="rtl"> 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -228,9 +228,10 @@
         }
        
         .line::after {
-            right: -8px;
-            border-width: 6px 0 6px 10px;
-            border-color: transparent transparent transparent var(--text-color);
+            left: -8px; /* For RTL */
+            right: auto;
+            border-width: 6px 10px 6px 0;
+            border-color: transparent var(--text-color) transparent transparent;
         }
        
         .interval-visual {
@@ -465,6 +466,118 @@
         .site-name a:hover {
           color: #005b8c; /* لون أغمق عند التمرير */
         }
+
+        /* Styles for Help Button and Modal */
+        .help-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 999;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .help-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: none; /* Initially hidden */
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex; /* Show when active */
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            color: var(--text-color);
+            padding: 25px 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease-out;
+            direction: rtl; /* Set direction for modal content */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-a);
+        }
+
+        .modal-content h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .modal-content h4 {
+            color: var(--secondary-color);
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 5px;
+            text-align: right;
+        }
+
+        .modal-content p, .modal-content ul {
+            line-height: 1.8;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+
+        .modal-content ul {
+            padding-right: 20px; /* Indentation for RTL list */
+        }
+
+        .modal-content li {
+            margin-bottom: 8px;
+        }
+
+        .modal-content strong {
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body class="dark-theme">
@@ -558,6 +671,42 @@
         </div>
     </div>
    
+    <button id="helpButton" class="help-btn">؟</button>
+
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" id="modalClose">&times;</span>
+            <h2>دليل استخدام حاسبة الفترات</h2>
+            <p>مرحباً بك في حاسبة العمليات على الفترات! إليك كيفية استخدامها:</p>
+            
+            <h4>1. إدخال الفترات:</h4>
+            <ul>
+                <li><strong>الفترة A و B:</strong> أدخل قيم البداية والنهاية لكل فترة في الحقول المخصصة.</li>
+                <li><strong>الأقواس:</strong> اختر نوع القوس لكل طرف من أطراف الفترة. "مغلقة" ([ ]) تعني أن العدد نفسه ضمن الفترة، و "مفتوحة" (] [) تعني أنه ليس ضمن الفترة.</li>
+            </ul>
+
+            <h4>2. العمليات الأساسية:</h4>
+            <ul>
+                <li><strong>⋂ التقاطع:</strong> يعرض الجزء المشترك بين الفترتين A و B.</li>
+                <li><strong>⋃ الاتحاد:</strong> يعرض كل الأعداد الموجودة في A أو B أو كليهما.</li>
+                <li><strong>∖ الطرح (A - B):</strong> يعرض الأعداد الموجودة في الفترة A وليست موجودة في B.</li>
+                <li><strong>∁ المتممة:</strong> يعرض كل الأعداد الحقيقية التي لا تنتمي للفترة المحددة (A أو B).</li>
+            </ul>
+
+            <h4>3. اختبار الانتماء:</h4>
+            <ul>
+                <li>اضغط على زر <strong>"∈ اختبار الانتماء"</strong> لإظهار قسم الاختبار.</li>
+                <li>أدخل العدد الذي تريد اختباره، ثم اضغط على زر "للفترة A" أو "للفترة B" لترى ما إذا كان العدد ينتمي لتلك الفترة أم لا.</li>
+            </ul>
+
+            <h4>4. التمثيل البياني:</h4>
+            <p>بعد كل عملية، سيظهر خط أعداد يوضح الفترات المدخلة (A و B) ونتيجة العملية بلون مميز لتسهيل الفهم.</p>
+
+            <h4>5. تبديل الثيم:</h4>
+            <p>استخدم زر <strong>"تبديل الثيم 💡/🌙"</strong> في الأعلى للتبديل بين الوضع المظلم والفاتح.</p>
+        </div>
+    </div>
+
     <script>
         let currentOperation = null;
         // =======================================================
@@ -835,6 +984,19 @@
             container.innerHTML = '';
            
             const allPoints = [intervalA.start, intervalA.end, intervalB.start, intervalB.end].filter(p => isFinite(p));
+            if (result) {
+                if (Array.isArray(result)) {
+                    result.forEach(r => {
+                        if (isFinite(r.start)) allPoints.push(r.start);
+                        if (isFinite(r.end)) allPoints.push(r.end);
+                    });
+                } else {
+                    if (isFinite(result.start)) allPoints.push(result.start);
+                    if (isFinite(result.end)) allPoints.push(result.end);
+                }
+            }
+            if(allPoints.length === 0) { allPoints.push(-10, 10); }
+
             const minVal = Math.min(...allPoints) - 2;
             const maxVal = Math.max(...allPoints) + 2;
             const range = maxVal - minVal;
@@ -885,23 +1047,24 @@
        
         function drawInterval(container, interval, minVal, range, className) {
             let startPos, endPos;
+            const safeRange = (range === 0) ? 1 : range;
 
             if (interval.start === -Infinity) {
                 startPos = 5;
             } else {
-                startPos = ((interval.start - minVal) / range) * 90 + 5;
+                startPos = ((interval.start - minVal) / safeRange) * 90 + 5;
             }
 
             if (interval.end === Infinity) {
                 endPos = 95;
             } else {
-                endPos = ((interval.end - minVal) / range) * 90 + 5;
+                endPos = ((interval.end - minVal) / safeRange) * 90 + 5;
             }
            
             const div = document.createElement('div');
             div.className = `interval-visual ${className}`;
             div.style.left = startPos + '%';
-            div.style.width = (endPos - startPos) + '%';
+            div.style.width = Math.max(0, (endPos - startPos)) + '%';
             container.appendChild(div);
            
             if (interval.start !== -Infinity) {
@@ -944,6 +1107,32 @@
                 container.appendChild(endIndicator);
             }
         }
+
+        // =======================================================
+        // دوال دليل الاستخدام (Modal)
+        // =======================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            const helpButton = document.getElementById('helpButton');
+            const helpModal = document.getElementById('helpModal');
+            const modalClose = document.getElementById('modalClose');
+
+            if (helpButton && helpModal && modalClose) {
+                helpButton.addEventListener('click', () => {
+                    helpModal.classList.add('active');
+                });
+
+                modalClose.addEventListener('click', () => {
+                    helpModal.classList.remove('active');
+                });
+
+                // Close modal when clicking on the overlay
+                helpModal.addEventListener('click', (event) => {
+                    if (event.target === helpModal) {
+                        helpModal.classList.remove('active');
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
